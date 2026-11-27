@@ -12539,6 +12539,76 @@ Tư Gia Nhà Gái
 
     <script src="./main.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        (() => {
+            const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyjRJoSbMWK-y_DbEyOyetoZV3auBCwUS82H0yQ8rPf0jgV25wY6rDblNL8AB6M1BKmDA/exec';
+            const formIds = new Set(['7rqf0hm5', '8xg40g6z']);
+            const pendingForms = new WeakSet();
+
+            document.addEventListener('submit', async (event) => {
+                const form = event.target;
+                if (!(form instanceof HTMLFormElement) || !formIds.has(form.id)) return;
+
+                // Prevent Webcake's submit handlers from sending this form to its own API.
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (pendingForms.has(form)) return;
+                pendingForms.add(form);
+
+                const source = new FormData(form);
+                const payload = new FormData();
+                payload.append('full_name', source.get('full_name') || '');
+                payload.append('relation', source.get('text_input_1') || '');
+                payload.append('message', source.get('text_input_2') || '');
+                payload.append('attend', source.get('select_1') || '');
+
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'Đang gửi xác nhận',
+                        text: 'Vui lòng chờ trong giây lát...',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+                }
+
+                try {
+                    await fetch(SHEET_API_URL, {
+                        method: 'POST',
+                        body: payload,
+                        mode: 'no-cors'
+                    });
+
+                    if (window.Swal) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Đã gửi thành công!',
+                            text: 'Cảm ơn bạn đã xác nhận tham dự.',
+                            confirmButtonText: 'Đóng',
+                            confirmButtonColor: '#b98569'
+                        });
+                    }
+                    form.reset();
+                } catch (error) {
+                    console.error('Không thể gửi xác nhận tham dự:', error);
+                    if (window.Swal) {
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Gửi chưa thành công',
+                            text: 'Vui lòng kiểm tra kết nối mạng và thử lại.',
+                            confirmButtonText: 'Thử lại',
+                            confirmButtonColor: '#b98569'
+                        });
+                    }
+                } finally {
+                    pendingForms.delete(form);
+                }
+            }, true);
+        })();
+    </script>
+
 
     <img height="1" width="1" alt="" style="display:none"
         src="/page_view.gif?pid=865a1e5c-f1df-41f4-bbad-0aa24317562c" />
